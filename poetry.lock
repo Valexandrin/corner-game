@@ -1,0 +1,15 @@
+[[package]]
+name = "tk"
+version = "0.1.0"
+description = "TensorKit is a deep learning helper between Python and C++."
+category = "main"
+optional = false
+python-versions = "*"
+
+[metadata]
+lock-version = "1.1"
+python-versions = "^3.10"
+content-hash = "1c343f83201838cce462a72c3cb7cf49aa5192eec19abe710a70a7a1eee02715"
+
+[metadata.files]
+tk = []
