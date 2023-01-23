@@ -41,22 +41,20 @@ class Board:
     def put_checkers(self, p1, p2):
         for row in self.field:
             for cell in row:
-                if cell.x in self.top['x'] and cell.y in self.top['y']:
-                    cell.color = p2.color
-                    checker = Checker(cell.x, cell.y, cell.color)
-                    cell.checker_id = checker.id
-                    p2.checkers[checker.id] = checker
+                x, y = cell.x, cell.y
+                if x in self.top['x'] and y in self.top['y']:
+                    p2.add_checker(cell)
+                    p1.win_coords.add((x, y))
                 if cell.x in self.bottom['x'] and cell.y in self.bottom['y']:
-                    cell.color = p1.color
-                    checker = Checker(cell.x, cell.y, cell.color)
-                    cell.checker_id = checker.id
-                    p1.checkers[checker.id] = checker
+                    p1.add_checker(cell)
+                    p2.win_coords.add((x, y))
 
-    def make_selection(self, chosen_cell):
-        self.clean()
+    def select_cells(self, chosen_cell):
+        if self.selected_cell:
+            self.clean()
         self.grip(chosen_cell)
         self.get_paths(chosen_cell)
-        self.show_path(self.paths)
+        self.show_paths()
 
     def update_cells(self, new_pos):
         new_pos.color = self.selected_cell.color
@@ -73,7 +71,6 @@ class Board:
             return
         if cell in self.checked_cells:
             return
-        self.checked_cells.add(cell)
         return True
 
     def get_paths(self, cell, level=1):
@@ -107,6 +104,7 @@ class Board:
             next_cell = self.field[i][j]
             if not self.is_valid(next_cell):
                 continue
+            self.checked_cells.add(cell)
 
             last_path = []
 
@@ -123,29 +121,33 @@ class Board:
                     self.paths.append(last_path)
 
     def choose_path(self, cell):
+        valid_path = []
         for path in self.paths:
-            if path[-1] == cell:
-                return path
+            if path[-1] != cell:
+                continue
+            if not valid_path:
+                valid_path = path
+            if len(path) < len(valid_path):
+                valid_path = path
 
-    def show_path(self, paths):
-        for path in paths:
+        return valid_path
+
+    def show_paths(self):
+        for path in self.paths:
             for cell in path:
                 cell.select("yellow")
 
     def clean(self):
-        if self.selected_cell:
-            self.selected_cell.released()
-            self.selected_cell = None
-        if self.paths:
-            for path in self.paths:
-                for cell in path:
-                    cell.released()
+        self.selected_cell.released()
+        for path in self.paths:
+            for cell in path:
+                cell.released()
+
         self.paths = []
         self.checked_cells = set()
+        self.selected_cell = None
 
     def grip(self, cell):
-        if self.selected_cell:
-            self.selected_cell.released()
         cell.select("green")
         self.selected_cell = cell
 
@@ -168,8 +170,7 @@ class Cell:
         canv.itemconfig(self.id, outline="black", width=1)
 
     def clean(self):
-        self.color = None
-        self.checker_id = None
+        self.color = self.checker_id = None
 
 
 class Player:
@@ -177,11 +178,31 @@ class Player:
         self.mode = mode
         self.color = color
         self.checkers = {}
+        self.checkers_coords = set()
+        self.win_coords = set()
 
-    def make_move(self, cell, path):
+    def add_checker(self, cell):
+        x, y = cell.x, cell.y
+        checker = Checker(x, y, self.color)
+        self.checkers[checker.id] = checker
+        self.checkers_coords.add((x, y))
+
+        cell.checker_id = checker.id
+        cell.color = self.color
+
+    def move_checker(self, cell, path):
         checker = self.checkers[cell.checker_id]
         for step in path:
             checker.move(step.x, step.y)
+
+    def update_coords(self, start, end):
+        self.checkers_coords.remove((start.x, start.y))
+        self.checkers_coords.add((end.x, end.y))
+
+    def check_win(self):
+        res = self.win_coords - self.checkers_coords
+        print(len(res))
+
 
 class Checker:
     def __init__(self, x, y, color):
@@ -213,8 +234,8 @@ class GameManager:
     def create_board(self):
         self.board = Board(cells_number)
 
-    def fill_board(self, p1, p2):
-        self.board.put_checkers(p1, p2)
+    def fill_board(self):
+        self.board.put_checkers(self.p1, self.p2)
 
     def create_players(self, mode1, mode2):
         colors = list(views.keys())
@@ -223,29 +244,37 @@ class GameManager:
         self.p1 = Player(mode1, color1)
         self.p2 = Player(mode2, color2)
         self.curr_player = self.p1 if self.p1.color == 'white' else self.p2
-        return self.p1, self.p2
 
     def change_player(self):
         self.curr_player = self.p1 if self.curr_player == self.p2 else self.p2
 
+    def make_selection(self, clicked_cell):
+        self.board.select_cells(clicked_cell)
+        self.show_info('Selected', clicked_cell)
+
+    def make_move(self, clicked_cell):
+        path = self.board.choose_path(clicked_cell)
+        if not path:
+            return
+        start, end = self.board.selected_cell, clicked_cell
+        self.curr_player.move_checker(start, path)
+        self.curr_player.update_coords(start, end)
+        self.curr_player.check_win()
+        self.board.update_cells(end)
+        self.board.clean()
+        self.change_player()
+        self.show_info('Destination', end)
+
     def click(self, event):
         i = event.x // cell_size
         j = event.y // cell_size
-        chosen_cell = self.board.field[i][j]
+        clicked_cell = self.board.field[i][j]
 
-        if chosen_cell.color == self.curr_player.color:
-            self.board.make_selection(chosen_cell)
-            self.show_info('Selected', chosen_cell)
+        if clicked_cell.color == self.curr_player.color:
+            self.make_selection(clicked_cell)
 
-        if self.board.paths:
-            path = self.board.choose_path(chosen_cell)
-            if not path:
-                return
-            self.curr_player.make_move(self.board.selected_cell, path)
-            self.board.update_cells(chosen_cell)
-            self.board.clean()
-            self.change_player()
-            self.show_info('Destination', chosen_cell)
+        elif self.board.paths:
+            self.make_move(clicked_cell)
 
     @staticmethod
     def show_info(name, cell):
@@ -259,8 +288,8 @@ class GameManager:
 def main():
     gm = GameManager()
     gm.create_board()
-    p1, p2 = gm.create_players('man', 'bot')
-    gm.fill_board(p1, p2)
+    gm.create_players('man', 'man')
+    gm.fill_board()
 
     while True:
         if gm.curr_player.mode == 'man':
