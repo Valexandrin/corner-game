@@ -56,7 +56,7 @@ class Board:
         self.clean()
         self.grip(chosen_cell)
         self.get_paths(chosen_cell)
-        self.show(self.paths)
+        self.show_path(self.paths)
 
     def update_cells(self, new_pos):
         new_pos.color = self.selected_cell.color
@@ -108,18 +108,26 @@ class Board:
             if not self.is_valid(next_cell):
                 continue
 
-            if self.paths and self.paths[-1] == cell:
-                self.paths[-1].append([next_cell])
+            last_path = []
+
+            if self.paths and self.paths[-1][-1] == cell:
+                [last_path.append(cell) for cell in self.paths[-1]]
+                self.paths[-1].append(next_cell)
             else:
                 self.paths.append([next_cell])
+
             self.get_paths(next_cell, level+1)
+
+            if last_path:
+                if last_path not in self.paths:
+                    self.paths.append(last_path)
 
     def choose_path(self, cell):
         for path in self.paths:
-            if cell in path:
+            if path[-1] == cell:
                 return path
 
-    def show(self, paths):
+    def show_path(self, paths):
         for path in paths:
             for cell in path:
                 cell.select("yellow")
@@ -183,9 +191,9 @@ class Checker:
         self.img = tk.PhotoImage(file=views[color])
         self.id = canv.create_image(x*cell_size, y*cell_size, image=self.img, anchor=tk.NW)
 
-    def move(self, *args):
+    def move(self, *new_position):
         old_x, old_y = self.x, self.y
-        self.x, self.y = args
+        self.x, self.y = new_position
         step_x = self.x - old_x
         step_y = self.y - old_y
         for i in range(26):
