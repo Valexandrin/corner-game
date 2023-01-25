@@ -1,5 +1,7 @@
-from game.cell import Cell
 from typing import List
+
+from game.cell import Cell
+from game.player import Player
 
 
 class Board:
@@ -17,7 +19,7 @@ class Board:
             'x': range(0, corner_size[0]),
             'y': range(cells_number - corner_size[1], cells_number)}
 
-    def put_checkers(self, p1, p2):
+    def put_checkers(self, p1: Player, p2: Player):
         for row in self.field:
             for cell in row:
                 x, y = cell.x, cell.y
@@ -28,31 +30,31 @@ class Board:
                     p1.add_checker(cell)
                     p2.win_coords.add((x, y))
 
-    def select_cells(self, chosen_cell):
+    def select_cells(self, chosen_cell: Cell):
         if self.selected_cell:
             self.clean()
         self.grip(chosen_cell)
         self.get_paths(chosen_cell)
         self.show_paths()
 
-    def update_cells(self, new_pos):
+    def update_cells(self, new_pos: Cell):
         new_pos.color = self.selected_cell.color
         new_pos.checker_id = self.selected_cell.checker_id
         self.selected_cell.clean()
 
-    def is_out_of(self, val):
+    def is_out_of(self, val: int):
         limit = range(self.cells_number)
         if val not in limit:
             return True
 
-    def is_valid(self, cell):
+    def is_valid(self, cell: Cell):
         if cell.color != None:
             return
         if cell in self.checked_cells:
             return
         return True
 
-    def get_paths(self, cell, level=1):
+    def get_paths(self, cell: Cell, level=1):
         steps = [
             [cell.x+1, cell.y],
             [cell.x-1, cell.y],
@@ -99,7 +101,7 @@ class Board:
                 if last_path not in self.paths:
                     self.paths.append(last_path)
 
-    def choose_path(self, cell):
+    def choose_path(self, cell: Cell):
         valid_path = []
         for path in self.paths:
             if path[-1] != cell:
@@ -126,6 +128,6 @@ class Board:
         self.checked_cells = set()
         self.selected_cell = None
 
-    def grip(self, cell):
+    def grip(self, cell: Cell):
         cell.select("green")
         self.selected_cell = cell

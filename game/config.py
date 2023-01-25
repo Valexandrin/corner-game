@@ -1,4 +1,5 @@
 title = "Уголки"
+game_speed = 20
 
 corner_size = [4, 3]
 
@@ -13,6 +14,7 @@ cell_imgs = {
 class GameConfig:
     def __init__(self) -> None:
         self.title = title
+        self.speed = game_speed
         self.cell_size = cell_size
         self.cells_number = cells_number
         self.side_size = cell_size * cells_number
