@@ -1,4 +1,5 @@
 import tkinter as tk
+
 from game.config import config
 
 side_size = config.side_size

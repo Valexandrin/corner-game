@@ -5,7 +5,7 @@ cell_size = config.cell_size
 
 
 class Cell:
-    def __init__(self, x, y):
+    def __init__(self, x: int, y: int):
         self.x = x
         self.y = y
         self.color = None
@@ -20,11 +20,14 @@ class Cell:
             fill = "#FFD39B",
         )
 
-    def select(self, color):
-        canv.itemconfig(self.id, outline=color, width=3)
+    def change_view(self, color: str="black", width: int=1):
+        canv.itemconfig(self.id, outline=color, width=width)
+
+    def select(self, color: str="yellow"):
+        self.change_view(color, width=3)
 
     def released(self):
-        canv.itemconfig(self.id, outline="black", width=1)
+        self.change_view("black", width=1)
 
     def clean(self):
         self.color = self.checker_id = None

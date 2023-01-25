@@ -1,6 +1,8 @@
 from random import shuffle
-from game.config import config
+
 from game.board import Board
+from game.cell import Cell
+from game.config import config
 from game.player import Player
 
 cells_number = config.cells_number
@@ -19,7 +21,7 @@ class GameManager:
     def fill_board(self):
         self.board.put_checkers(self.p1, self.p2)
 
-    def create_players(self, mode1, mode2):
+    def create_players(self, mode1: str='man', mode2: str='man'):
         colors = list(views.keys())
         shuffle(colors)
         color1, color2 = colors
@@ -30,11 +32,11 @@ class GameManager:
     def change_player(self):
         self.curr_player = self.p1 if self.curr_player == self.p2 else self.p2
 
-    def make_selection(self, clicked_cell):
+    def make_selection(self, clicked_cell: Cell):
         self.board.select_cells(clicked_cell)
         self.show_info('Selected', clicked_cell)
 
-    def make_move(self, clicked_cell):
+    def make_move(self, clicked_cell: Cell):
         path = self.board.choose_path(clicked_cell)
         if not path:
             return
@@ -59,7 +61,7 @@ class GameManager:
             self.make_move(clicked_cell)
 
     @staticmethod
-    def show_info(name, cell):
+    def show_info(name, cell: Cell):
         print('{name} x={x}, y={y}'.format(
             name = name,
             x = cell.x,
