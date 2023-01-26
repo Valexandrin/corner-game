@@ -8,7 +8,7 @@ class Board:
     def __init__(self, cells_number: int=8, corner_size: List[int]=[3, 3]) -> None:
         self.checked_cells = set()
         self.selected_cell = None
-        self.paths = []
+        self.paths: List[List[Cell]] = []
         self.cells_number = cells_number
         self.field = [[Cell(i, j) for j in range(0, cells_number)] for i in range(0, cells_number)]
         self.top = {
@@ -29,6 +29,10 @@ class Board:
                 if cell.x in self.bottom['x'] and cell.y in self.bottom['y']:
                     p1.add_checker(cell)
                     p2.win_coords.add((x, y))
+                if x == self.top['x'][-1] and y == self.top['y'][0]:
+                    p1.farest_point = (x, y)
+                if x == self.bottom['x'][0] and y == self.bottom['y'][-1]:
+                    p2.farest_point = (x, y)
 
     def select_cells(self, chosen_cell: Cell):
         if self.selected_cell:
@@ -119,7 +123,8 @@ class Board:
                 cell.select("yellow")
 
     def clean(self):
-        self.selected_cell.released()
+        if self.selected_cell:
+            self.selected_cell.released()
         for path in self.paths:
             for cell in path:
                 cell.released()

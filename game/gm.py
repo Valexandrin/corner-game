@@ -43,9 +43,9 @@ class GameManager:
         start, end = self.board.selected_cell, clicked_cell
         self.curr_player.move_checker(start, path)
         self.curr_player.update_coords(start, end)
-        self.curr_player.check_win()
         self.board.update_cells(end)
         self.board.clean()
+        self.curr_player.check_win()
         self.change_player()
         self.show_info('Destination', end)
 

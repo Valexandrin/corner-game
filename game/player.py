@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
 from game.cell import Cell
 from game.checker import Checker
@@ -11,6 +11,7 @@ class Player:
         self.checkers: Dict[str, Checker] = {}
         self.checkers_coords = set()
         self.win_coords = set()
+        self.farest_point = Tuple[int]
 
     def add_checker(self, cell: Cell):
         x, y = cell.x, cell.y
