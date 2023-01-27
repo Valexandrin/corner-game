@@ -11,8 +11,8 @@ class Bot:
     def __init__(self, gm: GameManager) -> None:
         self.gm = gm
         self.board: Board = gm.board
-        self.checkers: Dict[str, Checker] = {}
-        self.paths: Dict[str, List[Cell]] = {}
+        self.farest_empty_win_point: Tuple[int] = tuple()
+        self.avaliable_checkers: Dict[Checker, List[List[Cell]]] = {}
 
     @staticmethod
     def count_distance(pt1: Tuple[int], pt2: Tuple[int]) -> float:
@@ -21,9 +21,13 @@ class Bot:
         dist = (dx**2 + dy**2)**0.5
         return dist
 
+    def clean(self):
+        self.avaliable_checkers = {}
+        self.farest_empty_cell = None
+
     def make_move(self):
-        self.checkers = self.gm.curr_player.checkers
-        self.write_paths()
+        self.get_avaliable_checkers()
+        self.get_farest_win_point()
 
         start_cell, path = self.choose_checker()
         end_cell = path[-1]
@@ -34,16 +38,33 @@ class Bot:
         self.gm.make_move(end_cell)
         self.clean()
 
-    def write_paths(self) -> None:
-        for checker_id in self.checkers.keys():
-            checker = self.checkers[checker_id]
+    def get_avaliable_checkers(self) -> None:
+        checkers = self.gm.curr_player.checkers
+        for checker_id in checkers.keys():
+            checker = checkers[checker_id]
             cell = self.board.field[checker.x][checker.y]
             self.board.get_paths(cell)
             paths = self.board.paths
             if paths:
-                best_path = self.get_best_path(paths)
-                self.paths[checker_id] = best_path
+                # best_path = self.get_best_path(paths)
+                self.avaliable_checkers[checker] = paths
                 self.board.clean()
+
+    def get_farest_win_point(self):
+        win_cells = self.gm.curr_player.win_coords
+        farest_cell = self.gm.curr_player.farest_point
+        dist = None
+        for x, y in win_cells:
+            cell: Cell = self.board.field[x][y]
+            if cell.color == self.gm.curr_player.color:
+                continue
+            new_dist = self.count_distance((x, y), farest_cell)
+            if not dist:
+                dist = new_dist
+                self.farest_empty_win_point = (x, y)
+            if new_dist < dist:
+                dist = new_dist
+                self.farest_empty_win_point = (x, y)
 
     def get_best_path(self, paths: List[List[Cell]]) -> List[Cell]:
         shortest = res = None
@@ -63,12 +84,12 @@ class Bot:
 
     def choose_checker(self) -> Tuple[Cell, List[Cell]]:
         longest: int = 0
-        for path in self.paths.values():
+        for path in self.avaliable_checkers.values():
             if len(path) > longest:
                 longest = len(path)
 
         best_checkers: List[Checker] = []
-        for checker_id, path in self.paths.items():
+        for checker_id, path in self.avaliable_checkers.items():
             if len(path) == longest:
                 best_checkers.append(self.checkers[checker_id])
 
@@ -77,7 +98,7 @@ class Bot:
         x, y = lost_behind.x, lost_behind.y
         chosen_cell = self.gm.board.field[x][y]
         checker_id = chosen_cell.checker_id
-        path = self.paths[checker_id]
+        path = self.avaliable_checkers[checker_id]
 
         return chosen_cell, path
 
@@ -96,6 +117,3 @@ class Bot:
                 lost_behind = checker
 
         return lost_behind
-
-    def clean(self):
-        self.paths = {}
