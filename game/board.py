@@ -10,7 +10,7 @@ class Board:
         self.selected_cell = None
         self.paths: List[List[Cell]] = []
         self.cells_number = cells_number
-        self.field = [[Cell(i, j) for j in range(0, cells_number)] for i in range(0, cells_number)]
+        self.field: List[List[Cell]] = [[Cell(i, j) for j in range(0, cells_number)] for i in range(0, cells_number)]
         self.top = {
             'x': range(cells_number - corner_size[0], cells_number),
             'y': range(0, corner_size[1]),
