@@ -11,7 +11,7 @@ class Player:
         self.checkers: Dict[str, Checker] = {}
         self.checkers_coords = set()
         self.win_coords: Set[Tuple[int]] = set()
-        self.farest_point = Tuple[int]
+        self.farest_point: Tuple[int] = None
 
     def add_checker(self, cell: Cell):
         x, y = cell.x, cell.y
