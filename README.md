@@ -6,14 +6,14 @@ Player who finished moving his checkers to opposite corner is winner.
 
 ## Algorithm for choosing best move ("bot" mode)
 
-- Find all possible paths for all checkers which can make a move.
 - Find farest empty cell (FEC) within "winner cells".
-- Count distance up to FEC for all avaliable checkers. Count an average.
-- Calculate parts (relative to the average) sizes.
-- Prioritize parts by using a target (part size relative to q-ty of avaliable checkers).
+- Find all avaliable checkers for making a move.
 - Choose checker for move:
-  - Most behind in prioritized checkers.
-  - Checker with longest (most productive) path. Before find "the best" path by calculation a distance up to FEC for each cell in path.
+  - Check if any checker can occupate FEC.
+  - Count distance up to FEC for all avaliable checkers. Count an average.
+  - Prioritize by a target ("far checkers" q-ty relative to all checkers q-ty).
+  - Calculate "the best" path based on a distance up to FEC for each cell in path for chosen checkers.
+- Make a move
 
 ## Images
 

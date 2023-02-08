@@ -13,7 +13,7 @@ class Bot:
         self.board: Board = gm.board
         self.avaliable_checkers: Dict[Checker, List[List[Cell]]] = {}
         self.winners: Set[Checker] = set()
-        self.farest_win_point: Tuple[int] = None
+        self.farest_win_point: Tuple[int] = gm.curr_player.farest_point
 
     @staticmethod
     def count_distance(pt1: Tuple[int], pt2: Tuple[int]) -> float:
@@ -22,23 +22,32 @@ class Bot:
         dist = (dx**2 + dy**2)**0.5
         return dist
 
+    @staticmethod
+    def get_fars(distances: Dict[float, Checker]) -> Dict[float, Checker]:
+        far_checkers = {}
+        values = list(distances.keys())
+        average = sum(values)/len(values)
+
+        for val in values:
+            if val >= average:
+                checker = (distances[val])
+                far_checkers[val] = checker
+
+        return far_checkers
+
     def clean(self):
         self.avaliable_checkers = {}
         self.winners = set()
-        self.farest_win_point = None
 
     def make_move(self):
         self.get_farest_win_point()
         self.get_avaliable_checkers()
-        win_distances = self.get_win_distances()
-        target_ratio = 0.3
-        start_cell, path = self.choose_checker(win_distances, target_ratio)
-        end_cell = path[-1]
 
-        self.board.selected_cell = start_cell
+        self.board.selected_cell, path = self.choose_checker()
         self.board.paths = [path]
-
+        end_cell = path[-1]
         self.gm.make_move(end_cell)
+
         self.clean()
 
     def get_avaliable_checkers(self) -> None:
@@ -54,24 +63,51 @@ class Bot:
                 self.avaliable_checkers[checker] = paths
                 self.board.clean()
 
+    def update_avaliables_checkers(self):
         if len(self.avaliable_checkers.keys() - self.winners) > 0:
             for item in self.winners:
                 if item in self.avaliable_checkers.keys():
                     self.avaliable_checkers.pop(item)
 
+    def choose_checker(self) -> Tuple[Cell, List[Cell]]:
+        chosen_cell, path = self.get_win_step()
+        if chosen_cell and path:
+            return chosen_cell, path
+
+        self.update_avaliables_checkers()
+
+        far_checkers = self.get_fars(self.get_win_distances())
+        if len(far_checkers) < 3:
+            checker, path = self.find_lost(far_checkers)
+        else:
+            checker, path = self.get_best()
+
+        chosen_cell = self.gm.board.field[checker.x][checker.y]
+        return chosen_cell, path
+
+    def get_win_step(self) -> Tuple[Cell, List[Cell]]:
+        fr_pt = self.gm.curr_player.farest_point
+        for checker, paths in self.avaliable_checkers.items():
+            for path in paths:
+                for ind, cell in enumerate(path):
+                    if (cell.x, cell.y) == self.farest_win_point:
+                        ch_x, ch_y = checker.x, checker.y
+                        curr_pt = self.count_distance((ch_x, ch_y), fr_pt)
+                        new_pt = self.count_distance((cell.x, cell.y), fr_pt)
+                        if new_pt > curr_pt:
+                            continue
+                        chosen_cell = self.gm.board.field[ch_x][ch_y]
+                        return chosen_cell, path[:ind+1]
+        return None, None
+
     def get_farest_win_point(self):
-        win_cells = self.gm.curr_player.win_coords
-        farest_cell = self.gm.curr_player.farest_point
-        dist = -1
-        for x, y in win_cells:
-            cell: Cell = self.board.field[x][y]
-            if cell.color == self.gm.curr_player.color:
+        dist = float('inf')
+        for x, y in self.gm.curr_player.win_coords:
+            cell = self.board.field[x][y]
+            if cell.color != None:
                 continue
 
-            new_dist = self.count_distance((x, y), farest_cell)
-            if dist == -1:
-                dist = new_dist
-                self.farest_win_point = (x, y)
+            new_dist = self.count_distance((x, y), self.gm.curr_player.farest_point)
             if new_dist < dist:
                 dist = new_dist
                 self.farest_win_point = (x, y)
@@ -79,87 +115,52 @@ class Bot:
     def get_win_distances(self):
         distances: Dict[float, Checker] = {}
         for checker in self.avaliable_checkers:
-            x, y = checker.x, checker.y
-            distance = self.count_distance((x, y), self.farest_win_point)
+            distance = self.count_distance((checker.x, checker.y), self.farest_win_point)
             distances[distance] = checker
         return distances
 
-    def get_parts(self, distances):
-        far_checkers, near_checkers = {}, {}
-        values = list(distances.keys())
-        average = sum(values)/len(values)
-        for val in values:
-            checker = (distances[val])
-            if val > average:
-                far_checkers[checker] = val
-            else:
-                near_checkers[checker] = val
-
-        return far_checkers, near_checkers
-
-    def get_best_path(self, checker, paths: List[List[Cell]]) -> List[Cell]:
+    def get_best_path(self, checker: Checker, paths: List[List[Cell]]) -> List[Cell]:
         goal_cell = self.farest_win_point
-
-        x, y = checker.x, checker.y
-        shortest = self.count_distance((x, y), goal_cell)
+        shortest = self.count_distance((checker.x, checker.y), goal_cell)
         best_path = []
 
         for path in paths:
             for ind, cell in enumerate(path):
-                x, y = cell.x, cell.y
-                dist = self.count_distance((x, y), goal_cell)
+                dist = self.count_distance((cell.x, cell.y), goal_cell)
                 if shortest > dist:
                     shortest = dist
-                    best_path = path[0:ind+1]
+                    best_path = path[:ind+1]
                 if shortest == dist:
-                    best_path = path[0:ind+1] if len(path[0:ind+1]) < len(best_path) else best_path
+                    if len(path[:ind+1]) < len(best_path):
+                        best_path = path[:ind+1]
 
         if not best_path:
+            paths = sorted(paths, key=len)
             return paths[0]
         return best_path
 
-    def choose_checker(self, win_distances, ratio) -> Tuple[Cell, List[Cell]]:
-        far_checkers, near_checkers = self.get_parts(win_distances)
-        far_size = len(far_checkers.keys())
-        near_size = len(near_checkers.keys())
-        if far_size/near_size < ratio:
-            print('lost_behind', far_size/near_size)
-            lost_behind = self.find_lost(far_checkers)
-            checker, path = lost_behind
-        else:
-            print('best_checkers', far_size/near_size)
-            best_checker = self.get_best_checker()
-            checker, path = best_checker
-
-        x, y = checker.x, checker.y
-        chosen_cell = self.gm.board.field[x][y]
-
-        return chosen_cell, path
-
-    def find_lost(self, checkers: Dict[Checker, float]) -> Dict[Checker, List[Cell]]:
-        lost_behind: Checker = choice(list(checkers.keys()))
+    def find_lost(self, checkers: Dict[float, Checker]) -> Dict[Checker, List[Cell]]:
+        lost_behind: Checker = None
         dist = 0
-        for checker, new_dist in checkers.items():
+
+        for new_dist, checker in checkers.items():
             if new_dist > dist:
                 dist = new_dist
                 lost_behind = checker
 
-        checker_paths = self.avaliable_checkers[lost_behind]
-        checker_paths = sorted(checker_paths, key=len)
-        best_path = checker_paths[0]
+        paths = self.avaliable_checkers[lost_behind]
+        return lost_behind, self.get_best_path(lost_behind, paths)
 
-        return lost_behind, best_path
-
-    def get_best_checker(self) -> Dict[Checker, List[Cell]]:
+    def get_best(self) -> Dict[Checker, List[Cell]]:
         longest: int = 0
         checkers: Dict[Checker, List[Cell]] = {}
+
         for checker, paths in self.avaliable_checkers.items():
             best_path = self.get_best_path(checker, paths)
             checkers[checker] = best_path
 
-        for path in checkers.values():
-            if len(path) > longest:
-                longest = len(path)
+            if len(best_path) > longest:
+                longest = len(best_path)
 
         best_checkers: Dict[Checker, List[Cell]] = {}
         for checker, path in checkers.items():
