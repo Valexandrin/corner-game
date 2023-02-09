@@ -14,6 +14,7 @@ views = config.checker_views
 class GameManager:
     def __init__(self):
         self.curr_player = None
+        self.win_status = False
 
     def create_board(self):
         self.board = Board(cells_number, corner_size)
@@ -45,7 +46,8 @@ class GameManager:
         self.curr_player.update_coords(start, end)
         self.board.update_cells(end)
         self.board.clean()
-        self.curr_player.check_win()
+        if self.curr_player.check_win():
+            self.win_status = True
         self.change_player()
         self.show_info('Destination', end)
 
