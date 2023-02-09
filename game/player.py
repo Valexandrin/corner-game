@@ -31,5 +31,7 @@ class Player:
         self.checkers_coords.remove((start.x, start.y))
         self.checkers_coords.add((end.x, end.y))
 
-    def check_win(self):
+    def check_win(self) -> bool:
         res = self.win_coords - self.checkers_coords
+        if not res:
+            return True

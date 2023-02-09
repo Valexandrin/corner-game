@@ -15,7 +15,7 @@ def main():
     if 'bot' in [mode1, mode2]:
         bot = Bot(gm)
 
-    while True:
+    while not gm.win_status:
         if gm.curr_player.mode == 'man':
             canv.bind("<Button-1>", gm.click)
         else:
