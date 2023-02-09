@@ -17,17 +17,16 @@ Player who finished moving his checkers to opposite corner is winner.
 
 ## Images
 
-city|tours|trip
-:-:|:-:|:-:
-![Alt-текст](https://github.com/gettrip/backend/blob/main/images/index.png?raw=true) | ![Alt-текст](https://github.com/gettrip/backend/blob/main/images/city_tour.png?raw=true) | ![Alt-текст](https://github.com/gettrip/backend/blob/main/images/trip.png?raw=true)
+city|tours
+:-:|:-:
+![Alt-текст](https://github.com/gettrip/backend/blob/main/images/index.png?raw=true) | ![Alt-текст](https://github.com/Valexandrin/corner-game/blob/main/game/images/game_view.png?raw=true)
 
 ## Project structure
 
-The service consists on two parts: backend and frontend. For running on localhost both need to be cloned:
+For running on localhost:
 
 ```bash
-git clone https://github.com/gettrip/backend.git
-git clone https://github.com/gettrip/frontend.git
+git clone https://github.com/Valexandrin/corner-game
 ```
 
 ## Start up
@@ -47,28 +46,12 @@ poetry init
 poetry install
 ```
 
-### Configure environment
+### Configure
 
-Create .env file by using .env.default.
-
-### Create database (backend)
-
-```bash
-make db.run
-make db.create
-```
+Change configurations in game/config.py
 
 ## Usage
 
 ```bash
 make run
-```
-
-## Resources used
-
-```bash
-PostgreSQL - database management system (DBMS)
-psycopg2-binary - lib. Work with PostgreSQL (multi-threaded applications)
-sqlalchemy - lib. Work with different DBMS
-pydantic - lib. Data validation and settings management
 ```
