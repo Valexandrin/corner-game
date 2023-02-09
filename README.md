@@ -17,9 +17,7 @@ Player who finished moving his checkers to opposite corner is winner.
 
 ## Images
 
-city|tours
-:-:|:-:
-![Alt-текст](https://github.com/gettrip/backend/blob/main/images/index.png?raw=true) | ![Alt-текст](https://github.com/Valexandrin/corner-game/blob/main/game/images/game_view.png?raw=true)
+![Alt-текст](https://github.com/Valexandrin/corner-game/blob/main/game/images/game_view.png?raw=true)
 
 ## Project structure
 
